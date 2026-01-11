@@ -1,0 +1,54 @@
+function doGet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Form Responses 1");
+  const data = sheet.getDataRange().getValues();
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Form Responses 1");
+  const historySheet = ss.getSheetByName("edit&delet");
+
+  if (!e || !e.parameter) return ContentService.createTextOutput("No Data");
+
+  const action = e.parameter.action;
+  const rowIndex = Number(e.parameter.rowIndex);
+
+  // ✅ UPDATE DATA (KATEGORI)
+  if (action === "updateStatus") {
+    const newValue = e.parameter.status;
+    const rowData = sheet.getRange(rowIndex, 1, 1, 8).getValues()[0];
+    
+    sheet.getRange(rowIndex, 6).setValue(newValue); // Kolom E (Kategori)
+
+    if (historySheet) {
+       historySheet.appendRow([new Date(), "EDIT", rowIndex, rowData[1], rowData[3], rowData[4], newValue]);
+    }
+    return ContentService.createTextOutput(JSON.stringify({status:"success"})).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // ✅ DELETE DATA
+  if (action === "delete") {
+    if (rowIndex > 1) {
+      sheet.deleteRow(rowIndex);
+      return ContentService.createTextOutput(JSON.stringify({status:"success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // ✅ INPUT BARU
+  // Sesuaikan dengan form input Anda (Urutan A-H)
+  const rowData = [
+    new Date(),               // A: Timestamp
+    e.parameter.tanggal,      // C: TANGGAL
+    e.parameter.deskripsi,    // D: DESKRIPSI
+    e.parameter.nominal,      // E: NOMINAL
+    e.parameter.kategori,     // F: KATEGORI
+    e.parameter.sumber,       // G: SUMBER/AKUN
+    e.parameter.tujuan,       // H: AKUN TUJUAN
+    e.parameter.url_gambar    // I: UPLOAD GAMBAR
+  ];
+  sheet.appendRow(rowData);
+  return ContentService.createTextOutput(JSON.stringify({status:"success"})).setMimeType(ContentService.MimeType.JSON);
+}
