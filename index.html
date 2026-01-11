@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Kontrol Uang - Tabel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css"
+    />
+    <style>
+      body {
+        padding-top: 70px; /* Memberi ruang agar konten tidak tertutup navbar fixed */
+      }
+      #sheetTable thead th {
+        background-color: #0dcaf0;
+        color: #fff;
+        text-align: center;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #cff4fc !important;
+      }
+      .nominal-cell {
+        text-align: right;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    <nav
+      class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">💰 KontrolUang</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="index.html">Beranda</a>
+            </li>
+            <li class="nav-item ms-lg-3">
+              <a href="input.html" class="nav-link">Input Transaksi</a>
+            </li>
+            <li class="nav-item ms-lg-3">
+              <a href="rekap.html" class="nav-link">Rekap Rincian</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-4">
+      <div class="mb-4">
+        <h3 class="fw-bold">Rekap Kontrol Uang</h3>
+        <p class="text-muted">Pantau arus kas Anda secara real-time.</p>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+          <div class="card shadow-sm border-0">
+            <div class="card-body text-center">
+              <h6 class="text-muted small uppercase">Total Pemasukan</h6>
+              <h4 class="fw-bold text-success" id="totalMasuk">Rp 0</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card shadow-sm border-0">
+            <div class="card-body text-center">
+              <h6 class="text-muted small uppercase">Total Pengeluaran</h6>
+              <h4 class="fw-bold text-danger" id="totalKeluar">Rp 0</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card shadow-sm border-0">
+            <div class="card-body text-center">
+              <h6 class="text-muted small uppercase">Saldo Akhir</h6>
+              <h4 class="fw-bold text-primary" id="saldoAkhir">Rp 0</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="loader" class="text-center my-5">
+        <div class="spinner-border text-info" role="status"></div>
+        <p class="mt-2">Memuat data...</p>
+      </div>
+
+      <div
+        class="table-responsive bg-white p-3 rounded shadow-sm border"
+        id="tableContainer"
+        style="display: none"
+      >
+        <table
+          id="sheetTable"
+          class="table table-hover table-bordered align-middle w-100"
+        >
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Tanggal</th>
+              <th>Deskripsi</th>
+              <th>Nominal</th>
+              <th>Kategori</th>
+              <th>Sumber</th>
+              <th>Tujuan</th>
+              <th>Bukti</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
+
+    <script>
+      const scriptUrl =
+        "https://script.google.com/macros/s/AKfycbxg4yofdtlwEWcZE-3rpXts3IUbGqoD4HNwjnj7wsQWHqGZE7HbKjVj-HiqTKOVdvBUoQ/exec";
+
+      function formatRupiah(num) {
+        return "Rp " + Number(num).toLocaleString("id-ID");
+      }
+
+      function loadTable() {
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("tableContainer").style.display = "none";
+
+        fetch(scriptUrl)
+          .then((r) => r.json())
+          .then((data) => {
+            const rows = data.slice(1);
+            let tbody = "";
+            let masuk = 0,
+              keluar = 0;
+
+            rows.forEach((row, i) => {
+              const sheetIdx = i + 2;
+              const tanggal = row[2];
+              const deskripsi = row[3] || "-";
+              const nominal = parseFloat(row[4]) || 0;
+              const kategori = String(row[5] || "").toUpperCase();
+              const sumber = row[6] || "-";
+              const tujuan = row[7] || "-";
+              const bukti = row[8] || "";
+
+              if (kategori === "PEMASUKAN") masuk += nominal;
+              else if (kategori === "PENGELUARAN") keluar += nominal;
+
+              tbody += `
+                <tr>
+                    <td class="text-center">${i + 1}</td>
+                    <td class="text-center">${formatDate(tanggal)}</td>
+                    <td>${deskripsi}</td>
+                    <td class="text-end fw-bold">Rp ${nominal.toLocaleString(
+                      "id-ID"
+                    )}</td>
+                    <td class="text-center">
+                        <span class="badge ${
+                          kategori === "PEMASUKAN" ? "bg-success" : "bg-danger"
+                        }">
+                            ${kategori}
+                        </span>
+                    </td>
+                    <td>${sumber}</td>
+                    <td>${tujuan}</td>
+                    <td class="text-center">
+                        ${
+                          bukti
+                            ? `<a href="${bukti}" target="_blank" class="btn btn-sm btn-outline-primary">Lihat</a>`
+                            : "-"
+                        }
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group">
+                            <button onclick="editStatus(${sheetIdx}, '${kategori}')" class="btn btn-sm btn-info text-white">Edit</button>
+                            <button onclick="deleteData(${sheetIdx})" class="btn btn-sm btn-danger">Del</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+
+            document.getElementById("totalMasuk").innerText =
+              formatRupiah(masuk);
+            document.getElementById("totalKeluar").innerText =
+              formatRupiah(keluar);
+            document.getElementById("saldoAkhir").innerText = formatRupiah(
+              masuk - keluar
+            );
+            document.getElementById("tableBody").innerHTML = tbody;
+
+            if ($.fn.DataTable.isDataTable("#sheetTable")) {
+              $("#sheetTable").DataTable().destroy();
+            }
+            $("#sheetTable").DataTable({
+              responsive: true,
+              order: [[0, "desc"]],
+            });
+
+            document.getElementById("loader").style.display = "none";
+            document.getElementById("tableContainer").style.display = "block";
+          });
+      }
+
+      function editStatus(idx, curr) {
+        Swal.fire({
+          title: "Ubah Kategori",
+          input: "select",
+          inputOptions: { PEMASUKAN: "PEMASUKAN", PENGELUARAN: "PENGELUARAN" },
+          inputValue: curr,
+          showCancelButton: true,
+          confirmButtonText: "Simpan",
+          cancelButtonText: "Batal",
+        }).then((res) => {
+          if (res.isConfirmed) {
+            Swal.showLoading();
+            fetch(scriptUrl, {
+              method: "POST",
+              body: new URLSearchParams({
+                action: "updateStatus",
+                rowIndex: idx,
+                status: res.value,
+              }),
+            }).then(() => loadTable());
+          }
+        });
+      }
+
+      function deleteData(idx) {
+        Swal.fire({
+          title: "Hapus data?",
+          text: "Data yang dihapus tidak bisa dikembalikan!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          confirmButtonText: "Ya, Hapus!",
+          cancelButtonText: "Batal",
+        }).then((res) => {
+          if (res.isConfirmed) {
+            Swal.showLoading();
+            fetch(scriptUrl, {
+              method: "POST",
+              body: new URLSearchParams({ action: "delete", rowIndex: idx }),
+            }).then(() => loadTable());
+          }
+        });
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return "-";
+        const d = new Date(dateStr);
+        if (isNaN(d)) return dateStr;
+        return d.toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      }
+
+      loadTable();
+    </script>
+  </body>
+</html>

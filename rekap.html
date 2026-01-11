@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analisis Akun & Grafik - Kontrol Uang</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        padding-top: 80px;
+        background-color: #f4f7f6;
+      }
+      .card-akun {
+        border: none;
+        border-radius: 12px;
+        height: 100%;
+      }
+      .border-income {
+        border-left: 4px solid #198754;
+      }
+      .border-expense {
+        border-left: 4px solid #dc3545;
+      }
+      .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">💰 KontrolUang</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Beranda</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="rekap.html">Analisis</a>
+            </li>
+            <li class="nav-item ms-lg-3">
+              <a href="input.html" class="btn btn-primary btn-sm"
+                >Input Transaksi</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mb-5">
+      <h3 class="fw-bold mb-4">Ringkasan & Analisis Akun</h3>
+
+      <div class="row g-3 mb-5" id="akunCards"></div>
+
+      <div class="row">
+        <div class="col-lg-8 mb-4">
+          <div class="card shadow-sm border-0 p-3">
+            <h6 class="fw-bold">Tren Pemasukan vs Pengeluaran</h6>
+            <div class="chart-container">
+              <canvas id="lineChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+          <div class="card shadow-sm border-0 p-3">
+            <h6 class="fw-bold">Proporsi Transaksi</h6>
+            <div class="chart-container">
+              <canvas id="doughnutChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const scriptUrl =
+        "https://script.google.com/macros/s/AKfycbxAk2YtDkZ-5crUFUwyg8VzT_UxVP2zLWZCOKhuVbqV4p-J3jlAl9Tcw-Ky5lkdf-IILg/exec";
+
+      // Data Saldo Awal Sesuai Gambar
+      const saldoAwalData = {
+        CASH: 0,
+        SINARMAS: 0,
+        DANA: 2630,
+        SEABANK: 5418,
+        "LIVIN MANDIRI": 11400,
+        "SHOPEE PAY": 27975,
+        GOPAY: 27156,
+      };
+
+      async function loadData() {
+        const response = await fetch(scriptUrl);
+        const data = await response.json();
+        const rows = data.slice(1);
+
+        const summary = {};
+        const dailyData = {}; // Untuk grafik garis
+        let totalIn = 0,
+          totalOut = 0;
+
+        // Inisialisasi Akun
+        Object.keys(saldoAwalData).forEach((acc) => {
+          summary[acc] = { masuk: 0, keluar: 0, awal: saldoAwalData[acc] };
+        });
+
+        rows.forEach((row) => {
+          const tgl = new Date(row[2]).toLocaleDateString("id-ID");
+          const nominal = parseFloat(row[4]) || 0;
+          const kategori = String(row[5]).toUpperCase();
+          const sumber = String(row[6]).toUpperCase();
+          const tujuan = String(row[7]).toUpperCase();
+
+          // Hitung per Akun
+          if (kategori === "PEMASUKAN" && summary[sumber]) {
+            summary[sumber].masuk += nominal;
+            totalIn += nominal;
+          } else if (kategori === "PENGELUARAN" && summary[sumber]) {
+            summary[sumber].keluar += nominal;
+            totalOut += nominal;
+          } else if (kategori === "MUTASI/TRANSFER") {
+            if (summary[sumber]) summary[sumber].keluar += nominal;
+            if (summary[tujuan]) summary[tujuan].masuk += nominal;
+          }
+
+          // Siapkan data grafik garis
+          if (!dailyData[tgl]) dailyData[tgl] = { in: 0, out: 0 };
+          if (kategori === "PEMASUKAN") dailyData[tgl].in += nominal;
+          if (kategori === "PENGELUARAN") dailyData[tgl].out += nominal;
+        });
+
+        renderCards(summary);
+        renderCharts(dailyData, totalIn, totalOut);
+      }
+
+      function renderCards(summary) {
+        let html = "";
+        for (const [name, val] of Object.entries(summary)) {
+          const saldoAkhir = val.awal + val.masuk - val.keluar;
+          html += `
+                <div class="col-md-3 col-6">
+                    <div class="card card-akun shadow-sm p-3">
+                        <div class="small text-muted fw-bold">${name}</div>
+                        <div class="text-secondary small">Awal: Rp ${val.awal.toLocaleString()}</div>
+                        <div class="text-success small">+ ${val.masuk.toLocaleString()}</div>
+                        <div class="text-danger small">- ${val.keluar.toLocaleString()}</div>
+                        <hr class="my-2">
+                        <div class="fw-bold text-primary">Rp ${saldoAkhir.toLocaleString()}</div>
+                    </div>
+                </div>`;
+        }
+        document.getElementById("akunCards").innerHTML = html;
+      }
+
+      function renderCharts(daily, tIn, tOut) {
+        const labels = Object.keys(daily);
+        const dataIn = labels.map((l) => daily[l].in);
+        const dataOut = labels.map((l) => daily[l].out);
+
+        // Line Chart
+        new Chart(document.getElementById("lineChart"), {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Masuk",
+                data: dataIn,
+                borderColor: "#198754",
+                tension: 0.3,
+              },
+              {
+                label: "Keluar",
+                data: dataOut,
+                borderColor: "#dc3545",
+                tension: 0.3,
+              },
+            ],
+          },
+          options: { maintainAspectRatio: false },
+        });
+
+        // Doughnut Chart
+        new Chart(document.getElementById("doughnutChart"), {
+          type: "doughnut",
+          data: {
+            labels: ["Total Masuk", "Total Keluar"],
+            datasets: [
+              {
+                data: [tIn, tOut],
+                backgroundColor: ["#198754", "#dc3545"],
+              },
+            ],
+          },
+          options: { maintainAspectRatio: false },
+        });
+      }
+
+      loadData();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Input Transaksi - Kontrol Uang</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css"
+    />
+    <style>
+      body {
+        padding-top: 80px;
+        background-color: #f8f9fa;
+      }
+      .card-form {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      }
+      .form-label {
+        font-weight: 600;
+        color: #495057;
+      }
+      .btn-submit {
+        padding: 12px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">💰 KontrolUang</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Beranda</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="input.html">Input Transaksi</a>
+            </li>
+            <li class="nav-item ms-lg-3">
+              <a href="rekap.html" class="nav-link">Rekap Rincian</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mb-5">
+      <div class="row justify-content-center">
+        <div class="col-md-7">
+          <div class="card card-form p-4">
+            <h4 class="mb-4 fw-bold">Tambah Transaksi Baru</h4>
+            <form id="transactionForm">
+              <div class="mb-3">
+                <label for="tanggal" class="form-label">TANGGAL *</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="tanggal"
+                  name="tanggal"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label for="deskripsi" class="form-label">DESKRIPSI *</label>
+                <textarea
+                  class="form-control"
+                  id="deskripsi"
+                  name="deskripsi"
+                  rows="2"
+                  placeholder="Contoh: Beli Makan Siang"
+                  required
+                ></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label for="nominal" class="form-label">NOMINAL (Rp) *</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="nominal"
+                  name="nominal"
+                  placeholder="Contoh: 50000"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label d-block">KATEGORI *</label>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="kategori"
+                    id="pemasukan"
+                    value="PEMASUKAN"
+                    required
+                  />
+                  <label class="form-check-label" for="pemasukan"
+                    >PEMASUKAN</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="kategori"
+                    id="pengeluaran"
+                    value="PENGELUARAN"
+                  />
+                  <label class="form-check-label" for="pengeluaran"
+                    >PENGELUARAN</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="kategori"
+                    id="mutasi"
+                    value="MUTASI/TRANSFER"
+                  />
+                  <label class="form-check-label" for="mutasi"
+                    >MUTASI/TRANSFER</label
+                  >
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="sumber" class="form-label"
+                  >SUMBER / AKUN ASAL *</label
+                >
+                <select class="form-select" id="sumber" name="sumber" required>
+                  <option value="" selected disabled>Pilih Akun...</option>
+                  <option value="SINARMAS">SINARMAS</option>
+                  <option value="CASH">CASH</option>
+                  <option value="DANA">DANA</option>
+                  <option value="GOPAY">GOPAY</option>
+                  <option value="SHOPEE PAY">SHOPEE PAY</option>
+                  <option value="LIVIN MANDIRI">LIVIN MANDIRI</option>
+                  <option value="SEABANK">SEABANK</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="tujuan" class="form-label"
+                  >AKUN TUJUAN (Opsional/Mutasi)</label
+                >
+                <select class="form-select" id="tujuan" name="tujuan">
+                  <option value="-" selected>Pilih Tujuan...</option>
+                  <option value="SINARMAS">SINARMAS</option>
+                  <option value="CASH">CASH</option>
+                  <option value="DANA">DANA</option>
+                  <option value="GOPAY">GOPAY</option>
+                  <option value="SHOPEE PAY">SHOPEE PAY</option>
+                  <option value="LIVIN MANDIRI">LIVIN MANDIRI</option>
+                  <option value="SEABANK">SEABANK</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="bukti" class="form-label"
+                  >UPLOAD GAMBAR NOTA / BUKTI</label
+                >
+                <input
+                  class="form-control"
+                  type="file"
+                  id="bukti"
+                  accept="image/*"
+                />
+                <small class="text-muted"
+                  >Maks. 100MB (Akan dikonversi ke Base64/Link)</small
+                >
+              </div>
+
+              <div class="d-grid gap-2">
+                <button
+                  type="submit"
+                  class="btn btn-primary btn-submit"
+                  id="btnSubmit"
+                >
+                  KIRIM TRANSAKSI
+                </button>
+                <button type="reset" class="btn btn-outline-secondary">
+                  KOSONGKAN FORMULIR
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
+    <script>
+      const scriptUrl =
+        "https://script.google.com/macros/s/AKfycbxg4yofdtlwEWcZE-3rpXts3IUbGqoD4HNwjnj7wsQWHqGZE7HbKjVj-HiqTKOVdvBUoQ/exec";
+
+      const form = document.getElementById("transactionForm");
+      const btnSubmit = document.getElementById("btnSubmit");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML =
+          '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
+
+        const formData = new FormData(form);
+        const data = {
+          action: "insert", // Pastikan Apps Script Anda memiliki fungsi insert
+          tanggal: formData.get("tanggal"),
+          deskripsi: formData.get("deskripsi"),
+          nominal: formData.get("nominal"),
+          kategori: formData.get("kategori"),
+          sumber: formData.get("sumber"),
+          tujuan: formData.get("tujuan"),
+          bukti: "", // Jika butuh upload file, proses filereader diletakkan di sini
+        };
+
+        // Contoh pengiriman data menggunakan fetch POST
+        fetch(scriptUrl, {
+          method: "POST",
+          body: new URLSearchParams(data),
+        })
+          .then((response) => {
+            Swal.fire({
+              icon: "success",
+              title: "Berhasil!",
+              text: "Data transaksi telah disimpan.",
+              confirmButtonText: "OK",
+            }).then(() => {
+              window.location.href = "index.html"; // Kembali ke tabel
+            });
+          })
+          .catch((error) => {
+            Swal.fire("Error", "Gagal mengirim data", "error");
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "KIRIM TRANSAKSI";
+          });
+      });
+    </script>
+  </body>
+</html>
